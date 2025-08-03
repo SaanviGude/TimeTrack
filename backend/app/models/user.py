@@ -17,6 +17,6 @@ class User(BaseModel):
     is_superuser = Column(Boolean, default=False, nullable=False, comment="Admin privilege status")
 
     # Relationships
-    organization_memberships = relationship("OrganizationMember", back_populates="user")
+    owned_workspaces = relationship("Workspace", back_populates="owner")
     workspace_memberships = relationship("WorkspaceMember", back_populates="user")
     project_memberships = relationship("ProjectMember", back_populates="user")

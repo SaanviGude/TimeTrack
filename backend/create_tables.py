@@ -11,8 +11,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.database import Base, engine
 from app.models import (
-    User, Organization, OrganizationMember,
-    Workspace, WorkspaceMember, Project, ProjectMember,
+    User, Workspace, WorkspaceMember, Project, ProjectMember,
     Task, TimeEntry
 )
 

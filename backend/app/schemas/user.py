@@ -22,10 +22,10 @@ class UserResponse(UserBase):
 
 
 class UserUpdate(BaseSchema):
-    full_name: str | None = None
-    email: EmailStr | None = None
-    password: str | None = None  # For changing password
-    is_active: bool | None = None
+    full_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None  # For changing password
+    is_active: Optional[bool] = None
     # is_superuser should not be updatable by regular users
 
 # New schemas for protected user endpoints

@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from ..database import get_db
-from .. import crud
+from ..crud.auth import get_user_by_id, get_user_by_email, create_user, authenticate_user
 from ..schemas.auth import UserSignup, Token
 from ..schemas.user import UserResponse
 from ..utils import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, verify_token
@@ -27,7 +27,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     try:
         import uuid
         user_uuid = uuid.UUID(user_id)
-        user = crud.get_user_by_id(db, user_id=user_uuid)
+        user = get_user_by_id(db, user_id=user_uuid)
     except (ValueError, TypeError):
         raise credentials_exception
 
@@ -39,7 +39,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 @router.post("/register", response_model=UserResponse)
 def register_user(user: UserSignup, db: Session = Depends(get_db)):
     # Check if user already exists
-    db_user = crud.get_user_by_email(db, email=user.email)
+    db_user = get_user_by_email(db, email=user.email)
     if db_user:
         raise HTTPException(
             status_code=400,
@@ -47,12 +47,12 @@ def register_user(user: UserSignup, db: Session = Depends(get_db)):
         )
 
     # Create new user
-    return crud.create_user(db=db, user=user)
+    return create_user(db=db, user=user)
 
 
 @router.post("/login", response_model=Token)
 def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = crud.authenticate_user(db, form_data.username, form_data.password)
+    user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -5,7 +5,7 @@ from ..database import get_db
 from ..models.user import User
 from ..schemas.user import UserProfile, UserBasicInfo, UserProfileUpdate, UserDeleteResponse
 from .auth import get_current_user
-from .. import crud
+from ..crud.user import get_user_by_id_protected, update_user_profile as crud_update_user_profile, soft_delete_user
 
 router = APIRouter()
 
@@ -18,7 +18,7 @@ def get_users(db: Session = Depends(get_db)):
 
 
 @router.get("/me", response_model=UserBasicInfo)
-async def get_current_user_info(
+def get_current_user_info(
     current_user: User = Depends(get_current_user)
 ):
     """Get current user basic information"""
@@ -31,12 +31,12 @@ async def get_current_user_info(
 
 
 @router.get("/profile", response_model=UserProfile)
-async def get_user_profile(
+def get_user_profile(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get detailed user profile"""
-    user = crud.get_user_by_id_protected(db, str(current_user.id))
+    user = get_user_by_id_protected(db, str(current_user.id))
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -53,7 +53,7 @@ async def get_user_profile(
 
 
 @router.put("/profile", response_model=UserProfile)
-async def update_user_profile(
+def update_user_profile(
     user_update: UserProfileUpdate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -69,7 +69,7 @@ async def update_user_profile(
             detail="No fields to update"
         )
 
-    updated_user = crud.update_user_profile(
+    updated_user = crud_update_user_profile(
         db, str(current_user.id), update_data)
 
     if updated_user is None:
@@ -89,12 +89,12 @@ async def update_user_profile(
 
 
 @router.delete("/profile", response_model=UserDeleteResponse)
-async def delete_user_profile(
+def delete_user_profile(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Delete user account (soft delete)"""
-    success = crud.soft_delete_user(db, str(current_user.id))
+    success = soft_delete_user(db, str(current_user.id))
 
     if not success:
         raise HTTPException(

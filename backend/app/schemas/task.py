@@ -12,8 +12,8 @@ from enum import IntEnum
 
 
 class TaskStatus(IntEnum):
-    OPEN = 1
-    COMPLETED = 2
+    COMPLETED = 1
+    OPEN = 2
 
 # --- Schemas for Task / Subtask ---
 

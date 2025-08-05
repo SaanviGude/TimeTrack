@@ -4,7 +4,7 @@ from typing import List
 from ..database import get_db
 from ..crud.workspace import (
     create_workspace, get_user_workspaces, get_workspace_by_id,
-    update_workspace, add_workspace_member, update_member_role,
+    update_workspace, add_workspace_member,
     remove_workspace_member, check_workspace_permission, get_workspace_members,
     soft_delete_workspace
 )
@@ -54,13 +54,14 @@ def check_workspace_access(db: Session, workspace_id: str, user_id: str, require
 
     # 2-TIER LOGIC: Owner = ADMIN, Members = MEMBER
     is_owner = workspace.owner_id == user_uuid
-    
+
     if is_owner:
         # Owner is always ADMIN - can do everything
         user_effective_role = WorkspaceRole.ADMIN
     else:
         # Check if user is a member (any role in DB becomes MEMBER logically)
-        is_member = check_workspace_permission(db, workspace_uuid, user_uuid, WorkspaceRole.MEMBER)
+        is_member = check_workspace_permission(
+            db, workspace_uuid, user_uuid, WorkspaceRole.MEMBER)
         if is_member:
             user_effective_role = WorkspaceRole.MEMBER
         else:
@@ -68,9 +69,10 @@ def check_workspace_access(db: Session, workspace_id: str, user_id: str, require
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Not a workspace member"
             )
-    
+
     # Check if user's effective role meets the requirement
-    if user_effective_role <= required_role:  # Lower number = higher privilege (ADMIN=1, MEMBER=2)
+    # Lower number = higher privilege (ADMIN=1, MEMBER=2)
+    if user_effective_role <= required_role:
         return workspace
     else:
         role_name = "admin" if required_role == WorkspaceRole.ADMIN else "member"
@@ -217,31 +219,12 @@ def list_workspace_members(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all members of workspace (workspace owner only)"""
-    # Check admin access and get workspace
+    """Get all members of workspace (accessible to all workspace members)"""
+    # Check member access - both owners and members can see member list
     workspace = check_workspace_access(
-        db, workspace_id, current_user.id, WorkspaceRole.ADMIN)
+        db, workspace_id, current_user.id, WorkspaceRole.MEMBER)
 
     return get_workspace_members(db, workspace.id)
-
-
-@router.put("/{workspace_id}/members/{user_id}")
-def update_workspace_member_role(
-    workspace_id: str,
-    user_id: str,
-    role: WorkspaceRole,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Update member role in workspace (disabled in 2-tier system)"""
-    
-    # 2-TIER LOGIC: Role changes not allowed
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail="Role changes not allowed. Only workspace owner has admin privileges."
-    )
-
-    return {"message": "Member role updated successfully"}
 
 
 @router.delete("/{workspace_id}/members/{user_id}")

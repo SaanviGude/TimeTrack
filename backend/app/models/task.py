@@ -8,16 +8,22 @@ from .base import BaseModel
 from sqlalchemy.dialects.postgresql import UUID
 
 # Define the enum locally to avoid circular imports
+
+
 class TaskStatus(IntEnum):
-    OPEN = 1
-    COMPLETED = 2
+    COMPLETED = 1
+    OPEN = 2
+
 
 class Task(BaseModel):
     __tablename__ = "tasks"
 
-    name = Column(String, nullable=True, comment="Name of the task (for top-level tasks)")
-    description = Column(Text, nullable=True, comment="Description of the task or subtask")
-    deadline = Column(DateTime(timezone=True), nullable=True, comment="Optional deadline for the task/subtask (UTC)")
+    name = Column(String, nullable=True,
+                  comment="Name of the task (for top-level tasks)")
+    description = Column(Text, nullable=True,
+                         comment="Description of the task or subtask")
+    deadline = Column(DateTime(timezone=True), nullable=True,
+                      comment="Optional deadline for the task/subtask (UTC)")
     status = Column(Enum(TaskStatus, name='task_status_enum'), default=TaskStatus.OPEN, nullable=False,
                     comment="Current status of the task/subtask")
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"), nullable=True, index=True,
@@ -31,9 +37,12 @@ class Task(BaseModel):
     project = relationship("Project", back_populates="tasks")
     assigned_to = relationship("User", foreign_keys=[assigned_to_id])
     # Self-referencing relationship for subtasks
-    parent_task = relationship("Task", remote_side="Task.id", back_populates="subtasks", foreign_keys=[parent_task_id])
-    subtasks = relationship("Task", back_populates="parent_task", cascade="all, delete-orphan")
-    time_entries = relationship("TimeEntry", back_populates="task", cascade="all, delete-orphan")
+    parent_task = relationship("Task", remote_side="Task.id",
+                               back_populates="subtasks", foreign_keys=[parent_task_id])
+    subtasks = relationship(
+        "Task", back_populates="parent_task", cascade="all, delete-orphan")
+    time_entries = relationship(
+        "TimeEntry", back_populates="task", cascade="all, delete-orphan")
 
     # Constraint to ensure a task is either a project task OR a subtask, not both
     # This logic can be enforced at the application level during creation or via DB constraint (CHECK constraint)

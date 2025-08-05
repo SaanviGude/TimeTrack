@@ -18,6 +18,59 @@ from ..models.user import User
 router = APIRouter()
 
 
+def check_workspace_access(db: Session, workspace_id: str, user_id: str, required_role: WorkspaceRole = WorkspaceRole.MEMBER):
+    """
+    Helper function to check workspace access with proper ownership and membership validation.
+    Returns the workspace if access is granted, raises HTTPException otherwise.
+    """
+    import uuid
+
+    # Parse workspace UUID
+    try:
+        workspace_uuid = uuid.UUID(workspace_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid workspace ID format: {workspace_id}"
+        )
+
+    # Parse user UUID
+    try:
+        user_uuid = uuid.UUID(str(user_id))
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid user ID format"
+        )
+
+    # Check if workspace exists
+    workspace = get_workspace_by_id(db, workspace_uuid)
+    if not workspace:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Workspace not found"
+        )
+
+    # Check access: owner always has admin access, otherwise check membership
+    is_owner = workspace.owner_id == user_uuid
+    if is_owner:
+        # Owner always has access to everything
+        return workspace
+
+    # Check membership permissions
+    has_member_access = check_workspace_permission(
+        db, workspace_uuid, user_uuid, required_role)
+    if has_member_access:
+        return workspace
+
+    # No access granted
+    role_name = "admin" if required_role == WorkspaceRole.ADMIN else "member"
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail=f"{role_name.title()} access required"
+    )
+
+
 @router.post("/", response_model=WorkspaceResponse)
 def create_new_workspace(
     workspace: WorkspaceCreate,
@@ -45,22 +98,43 @@ def get_workspace_details(
 ):
     """Get workspace details with members"""
     import uuid
-    workspace_uuid = uuid.UUID(workspace_id)
-    
-    # Check if user has access to this workspace
-    if not check_workspace_permission(db, workspace_uuid, current_user.id):
+
+    try:
+        workspace_uuid = uuid.UUID(workspace_id)
+    except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to access this workspace"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid workspace ID format: {workspace_id}"
         )
-    
+
+    # Check if user has access to this workspace (either as owner or member)
+    try:
+        user_uuid = uuid.UUID(str(current_user.id))
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid user ID format"
+        )
+
+    # First check if workspace exists
     workspace = get_workspace_by_id(db, workspace_uuid)
     if not workspace:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Workspace not found"
         )
-    
+
+    # Check if user is the owner or has member access
+    is_owner = workspace.owner_id == user_uuid
+    has_member_access = check_workspace_permission(
+        db, workspace_uuid, user_uuid)
+
+    if not (is_owner or has_member_access):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this workspace"
+        )
+
     return workspace
 
 
@@ -72,23 +146,17 @@ def update_workspace_details(
     db: Session = Depends(get_db)
 ):
     """Update workspace details (admin only)"""
-    import uuid
-    workspace_uuid = uuid.UUID(workspace_id)
-    
-    # Check if user is admin of this workspace
-    if not check_workspace_permission(db, workspace_uuid, current_user.id, WorkspaceRole.ADMIN):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
-        )
-    
-    updated_workspace = update_workspace(db, workspace_uuid, workspace_update)
+    # Check admin access and get workspace
+    workspace = check_workspace_access(
+        db, workspace_id, current_user.id, WorkspaceRole.ADMIN)
+
+    updated_workspace = update_workspace(db, workspace.id, workspace_update)
     if not updated_workspace:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Workspace not found"
         )
-    
+
     return updated_workspace
 
 
@@ -99,23 +167,17 @@ def delete_workspace(
     db: Session = Depends(get_db)
 ):
     """Soft delete workspace (admin only)"""
-    import uuid
-    workspace_uuid = uuid.UUID(workspace_id)
-    
-    # Check if user is admin of this workspace
-    if not check_workspace_permission(db, workspace_uuid, current_user.id, WorkspaceRole.ADMIN):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
-        )
-    
-    success = soft_delete_workspace(db, workspace_uuid)
+    # Check admin access and get workspace
+    workspace = check_workspace_access(
+        db, workspace_id, current_user.id, WorkspaceRole.ADMIN)
+
+    success = soft_delete_workspace(db, workspace.id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Workspace not found"
         )
-    
+
     return {"message": "Workspace deleted successfully"}
 
 
@@ -127,17 +189,11 @@ def add_member_to_workspace(
     db: Session = Depends(get_db)
 ):
     """Add member to workspace (admin only)"""
-    import uuid
-    workspace_uuid = uuid.UUID(workspace_id)
-    
-    # Check if user is admin of this workspace
-    if not check_workspace_permission(db, workspace_uuid, current_user.id, WorkspaceRole.ADMIN):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
-        )
-    
-    return add_workspace_member(db, workspace_uuid, member_data)
+    # Check admin access and get workspace
+    workspace = check_workspace_access(
+        db, workspace_id, current_user.id, WorkspaceRole.ADMIN)
+
+    return add_workspace_member(db, workspace.id, member_data)
 
 
 @router.get("/{workspace_id}/members", response_model=List[WorkspaceMemberResponse])
@@ -146,18 +202,12 @@ def list_workspace_members(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all members of workspace"""
-    import uuid
-    workspace_uuid = uuid.UUID(workspace_id)
-    
-    # Check if user has access to this workspace
-    if not check_workspace_permission(db, workspace_uuid, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to access this workspace"
-        )
-    
-    return get_workspace_members(db, workspace_uuid)
+    """Get all members of workspace (admin only)"""
+    # Check admin access and get workspace
+    workspace = check_workspace_access(
+        db, workspace_id, current_user.id, WorkspaceRole.ADMIN)
+
+    return get_workspace_members(db, workspace.id)
 
 
 @router.put("/{workspace_id}/members/{user_id}")
@@ -170,23 +220,27 @@ def update_workspace_member_role(
 ):
     """Update member role in workspace (admin only)"""
     import uuid
-    workspace_uuid = uuid.UUID(workspace_id)
-    member_uuid = uuid.UUID(user_id)
-    
-    # Check if user is admin of this workspace
-    if not check_workspace_permission(db, workspace_uuid, current_user.id, WorkspaceRole.ADMIN):
+
+    # Check admin access and get workspace
+    workspace = check_workspace_access(
+        db, workspace_id, current_user.id, WorkspaceRole.ADMIN)
+
+    # Parse member UUID
+    try:
+        member_uuid = uuid.UUID(user_id)
+    except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid user ID format: {user_id}"
         )
-    
-    updated_member = update_member_role(db, workspace_uuid, member_uuid, role)
+
+    updated_member = update_member_role(db, workspace.id, member_uuid, role)
     if not updated_member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Member not found"
         )
-    
+
     return {"message": "Member role updated successfully"}
 
 
@@ -199,21 +253,25 @@ def remove_member_from_workspace(
 ):
     """Remove member from workspace (admin only)"""
     import uuid
-    workspace_uuid = uuid.UUID(workspace_id)
-    member_uuid = uuid.UUID(user_id)
-    
-    # Check if user is admin of this workspace
-    if not check_workspace_permission(db, workspace_uuid, current_user.id, WorkspaceRole.ADMIN):
+
+    # Check admin access and get workspace
+    workspace = check_workspace_access(
+        db, workspace_id, current_user.id, WorkspaceRole.ADMIN)
+
+    # Parse member UUID
+    try:
+        member_uuid = uuid.UUID(user_id)
+    except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid user ID format: {user_id}"
         )
-    
-    success = remove_workspace_member(db, workspace_uuid, member_uuid)
+
+    success = remove_workspace_member(db, workspace.id, member_uuid)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Member not found"
         )
-    
+
     return {"message": "Member removed successfully"}

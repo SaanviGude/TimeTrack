@@ -67,11 +67,12 @@ def update_workspace(db: Session, workspace_id: uuid.UUID, workspace_update: Wor
 
 
 def add_workspace_member(db: Session, workspace_id: uuid.UUID, member_data: WorkspaceMemberCreate):
-    """Add member to workspace"""
+    """Add member to workspace (always as MEMBER in 2-tier system)"""
+    # 2-TIER LOGIC: Force all new members to be MEMBER role
     db_member = models.WorkspaceMember(
         workspace_id=workspace_id,
         user_id=member_data.user_id,
-        role=member_data.role
+        role=WorkspaceRole.MEMBER  # Always MEMBER, ignore member_data.role
     )
     db.add(db_member)
     db.commit()

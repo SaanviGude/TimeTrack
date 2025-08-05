@@ -4,7 +4,7 @@
 import uuid
 from datetime import datetime
 from typing import List, Optional
-from pydantic import Field
+from pydantic import Field, field_validator
 from .base import BaseSchema, BaseDBSchema
 from enum import IntEnum
 
@@ -19,8 +19,8 @@ class ProjectRole(IntEnum):
 
 
 class ProjectStatus(IntEnum):
-    ACTIVE = 1
-    COMPLETED = 2
+    COMPLETED = 1
+    ACTIVE = 2
 
 # --- Schemas for Project Member (Team) ---
 
@@ -58,6 +58,22 @@ class ProjectBase(BaseSchema):
         None, description="Optional project deadline")
     status: ProjectStatus = Field(
         ProjectStatus.ACTIVE, description="Current status of the project")
+
+    @field_validator('deadline', mode='before')
+    @classmethod
+    def validate_deadline(cls, v):
+        """Convert empty string to None for optional deadline"""
+        if v == "" or v is None:
+            return None
+        return v
+
+    @field_validator('description', mode='before')
+    @classmethod
+    def validate_description(cls, v):
+        """Convert empty string to None for optional description"""
+        if v == "" or v is None:
+            return None
+        return v
 
 
 class ProjectCreate(ProjectBase):

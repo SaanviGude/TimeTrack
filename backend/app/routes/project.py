@@ -2,13 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from ..database import get_db
+from .. import models
 from ..crud.project import (
     create_project, get_workspace_projects, get_user_projects, get_project_by_id,
     update_project, add_project_member, update_project_member_role,
-    remove_project_member, check_project_permission, get_project_members,
-    soft_delete_project
+    remove_project_member, get_project_members,
+    soft_delete_project, check_project_access, get_user_accessible_projects
 )
-from ..crud.workspace import check_workspace_permission
+from ..crud.workspace import check_workspace_access, is_workspace_owner
 from ..schemas.project import (
     ProjectCreate, ProjectResponse, ProjectUpdate,
     ProjectMemberCreate, ProjectMemberResponse, ProjectRole
@@ -27,13 +28,9 @@ def create_new_project(
     db: Session = Depends(get_db)
 ):
     """Create a new project within a workspace"""
-    # Check if user has access to the workspace
-    if not check_workspace_permission(db, project.workspace_id, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to create projects in this workspace"
-        )
-    
+    # Check if user has access to the workspace using new 2-tier system
+    check_workspace_access(db, str(project.workspace_id), str(current_user.id))
+
     return create_project(db, project, current_user.id)
 
 
@@ -43,18 +40,20 @@ def list_workspace_projects(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all projects in a workspace"""
+    """Get projects in a workspace (all for owners, accessible for members)"""
     import uuid
     workspace_uuid = uuid.UUID(workspace_id)
-    
-    # Check if user has access to the workspace
-    if not check_workspace_permission(db, workspace_uuid, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to access this workspace"
-        )
-    
-    return get_workspace_projects(db, workspace_uuid)
+
+    # Check if user has access to the workspace using new 2-tier system
+    check_workspace_access(db, workspace_id, str(current_user.id))
+
+    # Check if user is workspace owner
+    if is_workspace_owner(db, workspace_uuid, current_user.id):
+        # Workspace owner sees ALL projects
+        return get_workspace_projects(db, workspace_uuid)
+    else:
+        # Regular member sees only projects they created or are members of
+        return get_user_accessible_projects(db, current_user.id, workspace_uuid)
 
 
 @router.get("/my-projects", response_model=List[ProjectResponse])
@@ -73,23 +72,8 @@ def get_project_details(
     db: Session = Depends(get_db)
 ):
     """Get project details with members"""
-    import uuid
-    project_uuid = uuid.UUID(project_id)
-    
-    # Check if user has access to this project
-    if not check_project_permission(db, project_uuid, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to access this project"
-        )
-    
-    project = get_project_by_id(db, project_uuid)
-    if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
-        )
-    
+    # Use new 2-tier access check with workspace owner oversight
+    project = check_project_access(db, project_id, str(current_user.id))
     return project
 
 
@@ -101,23 +85,17 @@ def update_project_details(
     db: Session = Depends(get_db)
 ):
     """Update project details (manager only)"""
-    import uuid
-    project_uuid = uuid.UUID(project_id)
-    
-    # Check if user is manager of this project
-    if not check_project_permission(db, project_uuid, current_user.id, ProjectRole.MANAGER):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Manager access required"
-        )
-    
-    updated_project = update_project(db, project_uuid, project_update)
+    # Check manager access and get project using new 2-tier system
+    project = check_project_access(
+        db, project_id, str(current_user.id), ProjectRole.MANAGER)
+
+    updated_project = update_project(db, project.id, project_update)
     if not updated_project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Project not found"
         )
-    
+
     return updated_project
 
 
@@ -129,22 +107,18 @@ def delete_project(
 ):
     """Soft delete project (manager only)"""
     import uuid
-    project_uuid = uuid.UUID(project_id)
-    
-    # Check if user is manager of this project
-    if not check_project_permission(db, project_uuid, current_user.id, ProjectRole.MANAGER):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Manager access required"
-        )
-    
-    success = soft_delete_project(db, project_uuid)
+
+    # Check manager access using new 2-tier system
+    project = check_project_access(
+        db, project_id, str(current_user.id), ProjectRole.MANAGER)
+
+    success = soft_delete_project(db, project.id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Project not found"
         )
-    
+
     return {"message": "Project deleted successfully"}
 
 
@@ -155,18 +129,18 @@ def add_member_to_project(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Add member to project (manager only)"""
-    import uuid
-    project_uuid = uuid.UUID(project_id)
-    
-    # Check if user is manager of this project
-    if not check_project_permission(db, project_uuid, current_user.id, ProjectRole.MANAGER):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Manager access required"
-        )
-    
-    return add_project_member(db, project_uuid, member_data)
+    """Add member to project as MEMBER role (manager only)"""
+    # Check manager access using new 2-tier system
+    project = check_project_access(
+        db, project_id, str(current_user.id), ProjectRole.MANAGER)
+
+    # 2-TIER LOGIC: Override any role request to MEMBER
+    member_create = ProjectMemberCreate(
+        user_id=member_data.user_id,
+        role=ProjectRole.MEMBER  # Force MEMBER role
+    )
+
+    return add_project_member(db, project.id, member_create)
 
 
 @router.get("/{project_id}/members", response_model=List[ProjectMemberResponse])
@@ -175,18 +149,12 @@ def list_project_members(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all members of project"""
-    import uuid
-    project_uuid = uuid.UUID(project_id)
-    
-    # Check if user has access to this project
-    if not check_project_permission(db, project_uuid, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to access this project"
-        )
-    
-    return get_project_members(db, project_uuid)
+    """Get all members of project (manager only)"""
+    # Check manager access using new 2-tier system
+    project = check_project_access(
+        db, project_id, str(current_user.id), ProjectRole.MANAGER)
+
+    return get_project_members(db, project.id)
 
 
 @router.put("/{project_id}/members/{user_id}")
@@ -197,25 +165,46 @@ def update_project_member_role_endpoint(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Update member role in project (manager only)"""
+    """Update member role in project (manager only, with workspace owner protection)"""
     import uuid
-    project_uuid = uuid.UUID(project_id)
+
+    # Check manager access using new 2-tier system
+    project = check_project_access(
+        db, project_id, str(current_user.id), ProjectRole.MANAGER)
+
     member_uuid = uuid.UUID(user_id)
-    
-    # Check if user is manager of this project
-    if not check_project_permission(db, project_uuid, current_user.id, ProjectRole.MANAGER):
+
+    # Get workspace info for protection checks
+    workspace = db.query(models.Workspace).filter(
+        models.Workspace.id == project.workspace_id
+    ).first()
+
+    # PROTECTION: Check if trying to modify workspace owner
+    is_target_workspace_owner = workspace and workspace.owner_id == member_uuid
+    is_requester_workspace_owner = workspace and workspace.owner_id == current_user.id
+
+    if is_target_workspace_owner and not is_requester_workspace_owner:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Manager access required"
+            detail="Cannot modify workspace owner's role. Only workspace owner has this privilege."
         )
-    
-    updated_member = update_project_member_role(db, project_uuid, member_uuid, role)
+
+    if is_target_workspace_owner and role != ProjectRole.MANAGER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Workspace owner must always remain as MANAGER"
+        )
+
+    # Pass requester_id for additional protection in CRUD
+    updated_member = update_project_member_role(
+        db, project.id, member_uuid, role, current_user.id)
+
     if not updated_member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Member not found"
         )
-    
+
     return {"message": "Member role updated successfully"}
 
 
@@ -226,23 +215,49 @@ def remove_member_from_project(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Remove member from project (manager only)"""
+    """Remove member from project (manager only, with workspace owner protection)"""
     import uuid
-    project_uuid = uuid.UUID(project_id)
-    member_uuid = uuid.UUID(user_id)
-    
-    # Check if user is manager of this project
-    if not check_project_permission(db, project_uuid, current_user.id, ProjectRole.MANAGER):
+
+    # Check manager access using new 2-tier system
+    project = check_project_access(
+        db, project_id, str(current_user.id), ProjectRole.MANAGER)
+
+    # Parse member UUID
+    try:
+        member_uuid = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid user ID format: {user_id}"
+        )
+
+    # Get workspace info for protection checks
+    workspace = db.query(models.Workspace).filter(
+        models.Workspace.id == project.workspace_id
+    ).first()
+
+    # PROTECTION: Cannot remove workspace owner
+    is_target_workspace_owner = workspace and workspace.owner_id == member_uuid
+    if is_target_workspace_owner:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Manager access required"
+            detail="Cannot remove workspace owner from project. Workspace owner has permanent oversight access."
         )
-    
-    success = remove_project_member(db, project_uuid, member_uuid)
+
+    # PROTECTION: Cannot remove project creator
+    if project.creator_id == member_uuid:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot remove project creator. Creator always remains as manager."
+        )
+
+    # Pass requester_id for additional protection in CRUD
+    success = remove_project_member(
+        db, project.id, member_uuid, current_user.id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Member not found"
         )
-    
+
     return {"message": "Member removed successfully"}

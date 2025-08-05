@@ -20,7 +20,8 @@ router = APIRouter()
 
 def check_workspace_access(db: Session, workspace_id: str, user_id: str, required_role: WorkspaceRole = WorkspaceRole.MEMBER):
     """
-    Helper function to check workspace access with proper ownership and membership validation.
+    2-TIER SYSTEM: Check workspace access where Owner = ADMIN, Members = MEMBER.
+    Owner always has full access, members have limited access.
     Returns the workspace if access is granted, raises HTTPException otherwise.
     """
     import uuid
@@ -51,24 +52,32 @@ def check_workspace_access(db: Session, workspace_id: str, user_id: str, require
             detail="Workspace not found"
         )
 
-    # Check access: owner always has admin access, otherwise check membership
+    # 2-TIER LOGIC: Owner = ADMIN, Members = MEMBER
     is_owner = workspace.owner_id == user_uuid
+    
     if is_owner:
-        # Owner always has access to everything
+        # Owner is always ADMIN - can do everything
+        user_effective_role = WorkspaceRole.ADMIN
+    else:
+        # Check if user is a member (any role in DB becomes MEMBER logically)
+        is_member = check_workspace_permission(db, workspace_uuid, user_uuid, WorkspaceRole.MEMBER)
+        if is_member:
+            user_effective_role = WorkspaceRole.MEMBER
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not a workspace member"
+            )
+    
+    # Check if user's effective role meets the requirement
+    if user_effective_role <= required_role:  # Lower number = higher privilege (ADMIN=1, MEMBER=2)
         return workspace
-
-    # Check membership permissions
-    has_member_access = check_workspace_permission(
-        db, workspace_uuid, user_uuid, required_role)
-    if has_member_access:
-        return workspace
-
-    # No access granted
-    role_name = "admin" if required_role == WorkspaceRole.ADMIN else "member"
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail=f"{role_name.title()} access required"
-    )
+    else:
+        role_name = "admin" if required_role == WorkspaceRole.ADMIN else "member"
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"{role_name.title()} access required"
+        )
 
 
 @router.post("/", response_model=WorkspaceResponse)
@@ -188,12 +197,18 @@ def add_member_to_workspace(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Add member to workspace (admin only)"""
+    """Add member to workspace as MEMBER role (admin only)"""
     # Check admin access and get workspace
     workspace = check_workspace_access(
         db, workspace_id, current_user.id, WorkspaceRole.ADMIN)
 
-    return add_workspace_member(db, workspace.id, member_data)
+    # 2-TIER LOGIC: Override any role request to MEMBER
+    member_create = WorkspaceMemberCreate(
+        user_id=member_data.user_id,
+        role=WorkspaceRole.MEMBER  # Force MEMBER role
+    )
+
+    return add_workspace_member(db, workspace.id, member_create)
 
 
 @router.get("/{workspace_id}/members", response_model=List[WorkspaceMemberResponse])
@@ -202,7 +217,7 @@ def list_workspace_members(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all members of workspace (admin only)"""
+    """Get all members of workspace (workspace owner only)"""
     # Check admin access and get workspace
     workspace = check_workspace_access(
         db, workspace_id, current_user.id, WorkspaceRole.ADMIN)
@@ -218,28 +233,13 @@ def update_workspace_member_role(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Update member role in workspace (admin only)"""
-    import uuid
-
-    # Check admin access and get workspace
-    workspace = check_workspace_access(
-        db, workspace_id, current_user.id, WorkspaceRole.ADMIN)
-
-    # Parse member UUID
-    try:
-        member_uuid = uuid.UUID(user_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid user ID format: {user_id}"
-        )
-
-    updated_member = update_member_role(db, workspace.id, member_uuid, role)
-    if not updated_member:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Member not found"
-        )
+    """Update member role in workspace (disabled in 2-tier system)"""
+    
+    # 2-TIER LOGIC: Role changes not allowed
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Role changes not allowed. Only workspace owner has admin privileges."
+    )
 
     return {"message": "Member role updated successfully"}
 
@@ -265,6 +265,13 @@ def remove_member_from_workspace(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid user ID format: {user_id}"
+        )
+
+    # 2-TIER LOGIC: Prevent removing the workspace owner
+    if workspace.owner_id == member_uuid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot remove workspace owner. Owner always remains as admin."
         )
 
     success = remove_workspace_member(db, workspace.id, member_uuid)

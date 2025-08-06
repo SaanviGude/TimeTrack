@@ -2,7 +2,7 @@
 # backend/app/schemas/__init__.py
 
 # Import all base schemas first
-from .time_entry import TimeEntryBase, TimeEntryCreate, TimeEntryStop, TimeEntryUpdate, TimeEntryResponse
+from .time_entry import TimeEntryBase, TimeEntryCreate, TimeEntryStop, TimeEntryUpdate, TimeEntryResponse, TimeEntryTimerStart
 from .task import TaskStatus, TaskBase, TaskCreate, TaskUpdate, TaskResponse
 from .base import BaseSchema, BaseDBSchema, IDSchema, TimeStampSchema
 

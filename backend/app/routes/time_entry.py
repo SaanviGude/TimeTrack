@@ -13,7 +13,7 @@ from ..crud.time_entry import (
 from ..crud.task import get_task_by_id
 from ..crud.project import check_project_permission
 from ..schemas.time_entry import (
-    TimeEntryCreate, TimeEntryResponse, TimeEntryUpdate
+    TimeEntryCreate, TimeEntryResponse, TimeEntryUpdate, TimeEntryTimerStart
 )
 from ..schemas.project import ProjectRole
 from .auth import get_current_user
@@ -259,14 +259,14 @@ def delete_time_entry_record(
 # Timer endpoints - Simplified
 @router.post("/timer/start")
 def start_time_timer(
-    time_entry: TimeEntryCreate,
+    timer_data: TimeEntryTimerStart,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Start a timer for a task"""
     # Verify task exists and user has access
-    if time_entry.task_id:
-        task = get_task_by_id(db, time_entry.task_id)
+    if timer_data.task_id:
+        task = get_task_by_id(db, timer_data.task_id)
         if not task:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -292,8 +292,15 @@ def start_time_timer(
             detail="You already have an active timer. Stop it before starting a new one."
         )
 
-    # Set user_id and start timer
-    time_entry.user_id = current_user.id
+    # Create TimeEntryCreate object with user_id set
+    time_entry = TimeEntryCreate(
+        user_id=current_user.id,
+        task_id=timer_data.task_id,
+        project_id=timer_data.project_id,
+        description=timer_data.description,
+        start_time=timer_data.start_time
+    )
+    
     timer = start_time_entry(db, time_entry)
     return {"message": "Timer started successfully", "time_entry": timer}
 

@@ -29,6 +29,15 @@ class TimeEntryCreate(TimeEntryBase):
     task_id: uuid.UUID = Field(..., description="ID of the task")
 
 
+class TimeEntryTimerStart(BaseSchema):
+    """Schema for starting a timer - only requires task info"""
+    task_id: uuid.UUID = Field(..., description="ID of the task to track time for")
+    project_id: uuid.UUID = Field(..., description="ID of the project")
+    description: Optional[str] = Field(None, description="Optional description for this time entry")
+    start_time: datetime = Field(default_factory=lambda: datetime.now(
+        timezone.utc), description="Start time (defaults to now)")
+
+
 class TimeEntryStop(BaseSchema):
     end_time: datetime = Field(default_factory=lambda: datetime.now(
         timezone.utc), description="End time (defaults to now)")

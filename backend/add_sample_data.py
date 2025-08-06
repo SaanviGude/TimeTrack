@@ -7,7 +7,7 @@ from app.models.task import TaskStatus
 from app.models.project import ProjectStatus
 from app.models.workspace import WorkspaceRole
 from app.models.project import ProjectRole
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import func
 import uuid
 
@@ -17,10 +17,10 @@ def add_sample_data():
     try:
         print("Adding sample time tracking data...")
         
-        # Get the first user from the database
-        user = db.query(User).first()
+        # Get the first active (non-deleted) user from the database
+        user = db.query(User).filter(User.is_deleted == False).first()
         if not user:
-            print("No users found. Please register a user first.")
+            print("No active users found. Please register a user first.")
             return
             
         print(f"Using user: {user.full_name} ({user.email})")
@@ -118,7 +118,7 @@ def add_sample_data():
                     status=TaskStatus.OPEN,
                     project_id=projects[task_data["project"]].id,
                     assigned_to_id=user.id,
-                    deadline=datetime.utcnow() + timedelta(days=7)
+                    deadline=datetime.now(timezone.utc) + timedelta(days=7)
                 )
                 db.add(task)
                 db.commit()
@@ -126,7 +126,7 @@ def add_sample_data():
             tasks.append(task)
         
         # Create time entries for the last 30 days
-        base_date = datetime.utcnow() - timedelta(days=30)
+        base_date = datetime.now(timezone.utc) - timedelta(days=30)
         
         time_entries_data = [
             {"task_idx": 0, "hours": 3.5, "days_ago": 1, "desc": "Working on AI chatbot integration"},
@@ -147,7 +147,7 @@ def add_sample_data():
         ]
         
         for entry_data in time_entries_data:
-            entry_date = datetime.utcnow() - timedelta(days=entry_data["days_ago"])
+            entry_date = datetime.now(timezone.utc) - timedelta(days=entry_data["days_ago"])
             start_time = entry_date.replace(hour=9, minute=0, second=0, microsecond=0)
             end_time = start_time + timedelta(hours=entry_data["hours"])
             

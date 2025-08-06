@@ -11,15 +11,15 @@ router = APIRouter()
 async def get_productivity_insights(user_id: str, db: Session = Depends(get_db)):
     """Get basic productivity insights for the demo"""
     try:
-        # For demo purposes, get the first user if user_id is 'demo'
+        # For demo purposes, get the first active (non-deleted) user if user_id is 'demo'
         if user_id == 'demo':
-            user = db.query(User).first()
+            user = db.query(User).filter(User.is_deleted == False).first()
         else:
-            user = db.query(User).filter(User.id == user_id).first()
+            user = db.query(User).filter(User.id == user_id, User.is_deleted == False).first()
         
         if not user:
             return {
-                "message": "No user found",
+                "message": "No active user found",
                 "total_hours": 0,
                 "entries_count": 0,
                 "projects_worked": [],
@@ -108,11 +108,11 @@ async def get_productivity_insights(user_id: str, db: Session = Depends(get_db))
 async def get_recent_activity(user_id: str, days: int = 30, db: Session = Depends(get_db)):
     """Get recent activity for the demo"""
     try:
-        # For demo purposes, get the first user if user_id is 'demo'
+        # For demo purposes, get the first active (non-deleted) user if user_id is 'demo'
         if user_id == 'demo':
-            user = db.query(User).first()
+            user = db.query(User).filter(User.is_deleted == False).first()
         else:
-            user = db.query(User).filter(User.id == user_id).first()
+            user = db.query(User).filter(User.id == user_id, User.is_deleted == False).first()
         
         if not user:
             return {"time_entries": [], "daily_summaries": [], "period": f"Last {days} days"}

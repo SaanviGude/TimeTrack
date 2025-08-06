@@ -6,54 +6,98 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 // Helper function to fetch user data from backend
 async function fetchUserData(userId: string = 'demo') {
-  // Return demo data for now since backend is having issues
-  return {
-    message: "Using sample data from your TimeTrack database",
-    total_hours: 37.5,
-    entries_count: 15,
-    average_session_hours: 2.5,
-    projects_worked: ["TimeTrack Development", "Portfolio Website", "Client Project Alpha"],
-    project_hours_distribution: {
-      "TimeTrack Development": 18.0,
-      "Portfolio Website": 10.5,
-      "Client Project Alpha": 9.0
-    },
-    most_productive_project: "TimeTrack Development",
-    recent_week_hours: 12.0,
-    insights: [
-      "You've spent the most time on 'TimeTrack Development' with 18.0 hours",
-      "In the last 7 days, you've logged 12.0 hours", 
-      "Your average session length is 2.5 hours"
-    ]
-  };
+  try {
+    console.log(`Fetching user data from backend for user: ${userId}`);
+    const response = await fetch(`http://localhost:8000/analytics/productivity-insights/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Backend request failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('Successfully fetched user data from backend:', data);
+    return data;
+
+  } catch (error) {
+    console.error('Error fetching user data from backend:', error);
+    console.log('Falling back to demo data...');
+    
+    // Fallback to demo data if backend is unavailable
+    return {
+      message: "Using fallback data - backend unavailable",
+      total_hours: 37.5,
+      entries_count: 15,
+      average_session_hours: 2.5,
+      projects_worked: ["TimeTrack Development", "Portfolio Website", "Client Project Alpha"],
+      project_hours_distribution: {
+        "TimeTrack Development": 18.0,
+        "Portfolio Website": 10.5,
+        "Client Project Alpha": 9.0
+      },
+      most_productive_project: "TimeTrack Development",
+      recent_week_hours: 12.0,
+      insights: [
+        "You've spent the most time on 'TimeTrack Development' with 18.0 hours",
+        "In the last 7 days, you've logged 12.0 hours", 
+        "Your average session length is 2.5 hours"
+      ]
+    };
+  }
 }
 
 async function fetchRecentActivity(userId: string = 'demo') {
-  // Return demo data for now since backend is having issues
-  return {
-    time_entries: [
-      { date: '2025-08-05', duration_hours: 3.5, project_name: 'TimeTrack Development', task_name: 'AI Chatbot Integration' },
-      { date: '2025-08-04', duration_hours: 2.0, project_name: 'TimeTrack Development', task_name: 'Testing chatbot responses' },
-      { date: '2025-08-03', duration_hours: 4.0, project_name: 'TimeTrack Development', task_name: 'Database schema setup' },
-      { date: '2025-08-02', duration_hours: 2.5, project_name: 'Portfolio Website', task_name: 'Homepage wireframe design' },
-      { date: '2025-08-01', duration_hours: 1.5, project_name: 'TimeTrack Development', task_name: 'AI model configuration' }
-    ],
-    daily_summaries: [
-      { date: '2025-08-05', total_hours: 3.5, entries_count: 1, projects: ['TimeTrack Development'] },
-      { date: '2025-08-04', total_hours: 2.0, entries_count: 1, projects: ['TimeTrack Development'] },
-      { date: '2025-08-03', total_hours: 4.0, entries_count: 1, projects: ['TimeTrack Development'] },
-      { date: '2025-08-02', total_hours: 2.5, entries_count: 1, projects: ['Portfolio Website'] },
-      { date: '2025-08-01', total_hours: 1.5, entries_count: 1, projects: ['TimeTrack Development'] }
-    ],
-    period: "Last 30 days"
-  };
+  try {
+    console.log(`Fetching recent activity from backend for user: ${userId}`);
+    const response = await fetch(`http://localhost:8000/analytics/recent-activity/${userId}?days=30`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Backend request failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('Successfully fetched recent activity from backend:', data);
+    return data;
+
+  } catch (error) {
+    console.error('Error fetching recent activity from backend:', error);
+    console.log('Falling back to demo data...');
+    
+    // Fallback to demo data if backend is unavailable
+    return {
+      time_entries: [
+        { date: '2025-08-05', duration_hours: 3.5, project_name: 'TimeTrack Development', task_name: 'AI Chatbot Integration' },
+        { date: '2025-08-04', duration_hours: 2.0, project_name: 'TimeTrack Development', task_name: 'Testing chatbot responses' },
+        { date: '2025-08-03', duration_hours: 4.0, project_name: 'TimeTrack Development', task_name: 'Database schema setup' },
+        { date: '2025-08-02', duration_hours: 2.5, project_name: 'Portfolio Website', task_name: 'Homepage wireframe design' },
+        { date: '2025-08-01', duration_hours: 1.5, project_name: 'TimeTrack Development', task_name: 'AI model configuration' }
+      ],
+      daily_summaries: [
+        { date: '2025-08-05', total_hours: 3.5, entries_count: 1, projects: ['TimeTrack Development'] },
+        { date: '2025-08-04', total_hours: 2.0, entries_count: 1, projects: ['TimeTrack Development'] },
+        { date: '2025-08-03', total_hours: 4.0, entries_count: 1, projects: ['TimeTrack Development'] },
+        { date: '2025-08-02', total_hours: 2.5, entries_count: 1, projects: ['Portfolio Website'] },
+        { date: '2025-08-01', total_hours: 1.5, entries_count: 1, projects: ['TimeTrack Development'] }
+      ],
+      period: "Last 30 days (fallback data)"
+    };
+  }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const { query } = await req.json();
 
-    // Fetch real user data from the database
+    // Fetch real user data from the TimeTrackDB database via backend API
     const userData = await fetchUserData();
     const recentActivity = await fetchRecentActivity();
 

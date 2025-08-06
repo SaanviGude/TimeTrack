@@ -1,0 +1,76 @@
+/* In src/components/FeaturesSection.module.css */
+
+.featuresSection {
+  background-color: #ffffff;
+  color: #000000;
+  
+  /* We need padding to keep the text from hitting the edges */
+  padding: 2rem 2rem; 
+  
+  /* OPTIONAL: This adds the curved top corners */
+  border-radius: 20px 20px 0 0; 
+  
+  /* THIS is the correct property to pull the section up */
+  margin-top: -20rem; /* Adjust this negative value to get the perfect overlap */
+
+  /* These ensure it stacks correctly on top of the hero section */
+  position: relative; 
+  z-index: 10;
+}
+
+
+.container {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  align-items: flex-start; /* <-- This aligns them to the top */
+  gap: 3rem;
+}
+
+
+/* The feature list no longer needs to be centered itself */
+.featureList {
+    flex: 1;
+  /* We can set a width for the text column */
+  max-width: 550px; 
+}
+
+.imageContainer {
+  flex: 1; /* This tells the image block to take up the other half */
+margin-top: -4.5rem;
+}
+
+
+.featureItem h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+
+.featureItem p {
+  color: #333333;
+  line-height: 1.6;
+}
+
+/* To apply the effect to ALL feature items */
+
+.featureItem {
+  /* ... your existing margin-bottom ... */
+  margin-bottom: 0.5rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  transition: background-color 0.3s ease;
+}
+
+.featureItem:hover {
+  background-color: #bbe3fd;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .container {
+    /* On small screens, stack the columns vertically instead of side-by-side */
+    flex-direction: column;
+  }
+}

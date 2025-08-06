@@ -1,0 +1,99 @@
+/* This is the main background for the entire page */
+.pageWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(to bottom, #ffffff, #a9ccef);
+}
+
+/* This is the white card in the middle */
+.formCard {
+  background-color: white;
+  padding: 3rem;
+  border-radius: 16px;
+  box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+
+}
+
+.logo {
+  color: #0A74DA; /* Using the primary blue from your landing page */
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.heading {
+  color: #334155; /* A dark, soft gray for the heading */
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 2.5rem;
+}
+
+.formGroup {
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(10, 116, 218, 0.2);
+}
+
+.avatarGrid {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap; /* Allows avatars to wrap on smaller screens */
+}
+
+.avatar {
+  border-radius: 50%; /* Makes the image perfectly circular */
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 3px solid transparent;
+}
+
+.avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 3px var(--primary-blue);
+}
+
+.createButton {
+  width: 100%;
+  background-color: var(--primary-blue);
+  color: white;
+  padding: 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.createButton:hover {
+  background-color: #002D62; /* Using the dark blue for hover */
+}

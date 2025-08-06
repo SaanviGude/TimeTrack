@@ -1,0 +1,52 @@
+/* In src/components/Footer.module.css */
+
+.footer {
+  background-color: #011D3C;
+  color: #d1d5db; 
+  padding: 2rem 0;
+}
+
+.container {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 2rem; 
+  
+  /* --- This is the key change for the layout --- */
+  display: flex;
+  justify-content: center; /* Center all items */
+  align-items: center;
+  gap: 1.5rem; /* Creates space between the lines, text, and icons */
+}
+
+/* This is the new style for the decorative lines */
+.line {
+  height: 1px; /* The thickness of the line */
+  background-color: #ffffff;
+  opacity: 0.5; /* Makes the line slightly transparent */
+  flex-grow: 1; /* This makes the lines expand to fill all available space */
+}
+
+/* This new container will group the copyright and icons */
+.content {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-shrink: 0; /* Prevents this content from shrinking */
+}
+
+.socialIcons {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.socialIcons a {
+  color: #d1d5db;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.socialIcons a:hover {
+  color: #ffffff;
+}

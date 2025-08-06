@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from .database import Base, engine
-from .routes import auth, user, workspace, project, task, time_entry
+from .routes import auth, user, workspace, project, task, time_entry, analytics
 
 Base.metadata.create_all(bind=engine)
 
@@ -23,3 +23,6 @@ app.include_router(task.router, prefix="/tasks", tags=["Tasks"])
 
 # Time tracking routes
 app.include_router(time_entry.router, prefix="/time-entries", tags=["Time Tracking"])
+
+# Analytics routes
+app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])

@@ -3,11 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '../../contexts/AuthContext';
+import styles from './signup.module.css'; // Import the new CSS module
 
 export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState(''); // New state for Phone Number
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -39,7 +42,7 @@ export default function SignupPage() {
 
     try {
       await signup({ name, email, password, confirmPassword });
-      router.push('/dashboard');
+      router.push('/create_workspace');
     } catch (err: any) {
       setError(err.message || 'Signup failed. Please try again.');
     } finally {
@@ -48,31 +51,29 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-              sign in to your existing account
-            </Link>
-          </p>
+    <div className={styles.signupPageContainer}>
+      <div className={styles.leftPanel}>
+        <div className={styles.logoContainer}>
+          {/* Add the clock and logo from the image */}
+          <Image src="/your_clock_icon.png" alt="TimeTrack Logo" width={100} height={100} />
+          <h1 className={styles.logoText}>TimeTrack</h1>
         </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
+      </div>
+      
+      <div className={styles.rightPanel}>
+        <div className={styles.signupCard}>
+          <h2 className={styles.heading}>Create New Account</h2>
           
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Full Name
+          <form className={styles.signupForm} onSubmit={handleSubmit}>
+            {error && (
+              <div className={styles.errorBox}>
+                {error}
+              </div>
+            )}
+            
+            <div className={styles.formGroup}>
+              <label htmlFor="name" className={styles.label}>
+                Name:
               </label>
               <input
                 id="name"
@@ -82,14 +83,14 @@ export default function SignupPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter your full name"
+                className={styles.input}
+                placeholder=""
               />
             </div>
             
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
+            <div className={styles.formGroup}>
+              <label htmlFor="email" className={styles.label}>
+                Email:
               </label>
               <input
                 id="email"
@@ -99,14 +100,14 @@ export default function SignupPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter your email"
+                className={styles.input}
+                placeholder=""
               />
             </div>
             
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
+            <div className={styles.formGroup}>
+              <label htmlFor="password" className={styles.label}>
+                Create a Strong Password:
               </label>
               <input
                 id="password"
@@ -116,14 +117,14 @@ export default function SignupPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter your password"
+                className={styles.input}
+                placeholder=""
               />
             </div>
             
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm Password
+            <div className={styles.formGroup}>
+              <label htmlFor="confirmPassword" className={styles.label}>
+                Confirm Password:
               </label>
               <input
                 id="confirmPassword"
@@ -133,22 +134,29 @@ export default function SignupPage() {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Confirm your password"
+                className={styles.input}
+                placeholder=""
               />
             </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Creating account...' : 'Create account'}
-            </button>
-          </div>
-        </form>
+          
+            <div className={styles.buttonContainer}>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={styles.signupButton}
+              >
+                {isLoading ? 'Signing up...' : 'Sign Up'}
+              </button>
+            </div>
+          </form>
+          
+          <p className={styles.loginText}>
+            Already have an account?{' '}
+            <Link href="/login" className={styles.loginLink}>
+              Log In
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

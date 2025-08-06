@@ -1,3 +1,4 @@
+// src/contexts/AuthContext.tsx
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -16,14 +17,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Check if user is already logged in
-    const currentUser = authService.getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
-      setIsAuthenticated(true);
-    }
-    setIsLoading(false);
-  }, []);
+    const initializeAuth = async () => {
+      const token = authService.getToken();
+      if (token) {
+        // We have a token, now try to fetch the user to validate the session
+        const currentUser = await authService.fetchCurrentUser(token);
+        if (currentUser) {
+          setUser(currentUser);
+          setIsAuthenticated(true);
+        } else {
+          // Token is invalid or expired, log out
+          authService.logout();
+        }
+      }
+      setIsLoading(false);
+    };
+
+    initializeAuth();
+  }, []); // Run only once on component mount
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -36,12 +47,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return false;
     } catch (error) {
       console.error('Login error:', error);
-      return false;
+      throw error;
     }
   };
 
   const signup = async (data: SignupData): Promise<boolean> => {
     try {
+      // The signup service now automatically logs the user in
       const user = await authService.signup(data);
       if (user) {
         setUser(user);

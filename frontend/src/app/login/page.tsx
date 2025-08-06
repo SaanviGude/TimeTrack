@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '../../contexts/AuthContext';
+import styles from './login.module.css'; // Assuming you have a new CSS module for this styling
 
-export default function LoginPage() {  const [name, setName] = useState('');
+export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,11 +19,6 @@ export default function LoginPage() {  const [name, setName] = useState('');
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
-    if (!name.trim()) {
-      setError('Please enter your full name');
-      return;
-    }
 
     setIsLoading(true);
 
@@ -40,48 +37,29 @@ export default function LoginPage() {  const [name, setName] = useState('');
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-            Sign in to your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
-              create a new account
-            </Link>
-          </p>
+    <div className={styles.loginPageContainer}>
+      <div className={styles.leftPanel}>
+        <div className={styles.logoContainer}>
+          {/* Replace with your actual logo image path */}
+          <Image src="/your_logo_path.png" alt="TimeTrack Logo" width={100} height={100} />
+          <h1 className={styles.logoText}>TimeTrack</h1>
         </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
+      </div>
+      
+      <div className={styles.rightPanel}>
+        <div className={styles.loginCard}>
+          <h2 className={styles.heading}>Welcome Back!</h2>
           
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Full Name
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                autoComplete="name"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter your full name"
-              />
-            </div>
+          <form className={styles.loginForm} onSubmit={handleSubmit}>
+            {error && (
+              <div className={styles.errorBox}>
+                {error}
+              </div>
+            )}
             
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
+            <div className={styles.formGroup}>
+              <label htmlFor="email" className={styles.label}>
+                Email:
               </label>
               <input
                 id="email"
@@ -91,14 +69,14 @@ export default function LoginPage() {  const [name, setName] = useState('');
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className={styles.input}
                 placeholder="Enter your email"
               />
             </div>
             
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
+            <div className={styles.formGroup}>
+              <label htmlFor="password" className={styles.label}>
+                Enter Password:
               </label>
               <input
                 id="password"
@@ -108,22 +86,49 @@ export default function LoginPage() {  const [name, setName] = useState('');
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className={styles.input}
                 placeholder="Enter your password"
               />
             </div>
+            <div className={styles.forgotPasswordLink}>
+              <Link href="/forgot-password">
+                Forgot Password?
+              </Link>
+            </div>
+
+            <div className={styles.buttonContainer}>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={styles.loginButton}
+              >
+                {isLoading ? 'Logging in...' : 'Log In'}
+              </button>
+            </div>
+          </form>
+          
+          <div className={styles.divider}>
+            <span className={styles.dividerLine}></span>
+            <span className={styles.dividerText}>or</span>
+            <span className={styles.dividerLine}></span>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Signing in...' : 'Sign in'}
+          <p className={styles.createAccountText}>
+            Create New Account?{' '}
+            <Link href="/signup" className={styles.signupLink}>
+              Sign Up
+            </Link>
+          </p>
+
+          <div className={styles.socialLogin}>
+            <button className={styles.socialButton}>
+              <Image src="/google.svg" alt="Google" width={24} height={24} />
+            </button>
+            <button className={styles.socialButton}>
+              <Image src="/apple.svg" alt="Apple" width={24} height={24} />
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

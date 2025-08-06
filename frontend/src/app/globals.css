@@ -1,26 +1,43 @@
-@import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Define colors from the design to reuse them easily */
+:root {
+  --background-color: #ffffff;
+  --text-color: #333;
+  --primary-blue: #0A74DA; /* Main blue for buttons and accents */
+  --dark-blue-bg: #002D62; /* Darker blue for footer and features section */
+  --light-gray-text: #555;
+  --font-main: 'Inter', sans-serif; /* Example font, use whichever you prefer */
+}
+
+/* Basic Reset */
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: var(--font-main);
+  line-height: 1.6;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* --- ADD THIS BLOCK TO THE END OF THE FILE TO FIX THE HEIGHT --- */
+html,
+body {
+  height: auto !important;
+  min-height: auto !important;
 }

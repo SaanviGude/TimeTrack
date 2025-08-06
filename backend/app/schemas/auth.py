@@ -19,3 +19,14 @@ class Token(BaseSchema):
 
 class TokenPayload(BaseSchema):
     sub: str | None = None # User ID (UUID as string) for JWT
+
+class ForgotPasswordRequest(BaseSchema):
+    email: EmailStr = Field(..., description="Email address to send password reset link")
+
+class ResetPasswordRequest(BaseSchema):
+    token: str = Field(..., description="Password reset token")
+    new_password: str = Field(..., min_length=6, description="New password (min 6 characters)")
+
+class ForgotPasswordResponse(BaseSchema):
+    message: str
+    reset_token: str  # For development/testing - remove in production

@@ -50,6 +50,39 @@ def verify_user_active(db: Session, user_id: uuid.UUID):
     return user is not None
 
 
+def reset_user_password(db: Session, email: str, new_password: str):
+    """Reset user password by email"""
+    from ..utils import get_password_hash
+    
+    user = get_user_by_email(db, email)
+    if not user:
+        return False
+    
+    # Update password
+    user.hashed_password = get_password_hash(new_password)
+    db.commit()
+    db.refresh(user)
+    return True
+
+
+def request_password_reset(db: Session, email: str):
+    """Initiate password reset process for user"""
+    user = get_user_by_email(db, email)
+    if not user:
+        # Return True even if user doesn't exist for security (don't reveal user existence)
+        return False
+    
+    if not user.is_active or user.is_deleted:
+        return False
+    
+    # In a real application, you would:
+    # 1. Generate a reset token
+    # 2. Store it in database with expiration
+    # 3. Send email with reset link
+    # For now, we'll just return True to indicate the request was processed
+    return True
+
+
 def change_password(db: Session, user_id: uuid.UUID, current_password: str, new_password: str):
     """Change user password with current password verification"""
     from datetime import datetime

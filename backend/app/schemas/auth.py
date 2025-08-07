@@ -1,6 +1,7 @@
 # Login, Signup, Token schemas
 # backend/app/schemas/auth.py
 
+from typing import Optional
 from pydantic import Field, EmailStr
 from .base import BaseSchema
 
@@ -18,7 +19,7 @@ class Token(BaseSchema):
     token_type: str = "bearer"
 
 class TokenPayload(BaseSchema):
-    sub: str | None = None # User ID (UUID as string) for JWT
+    sub: Optional[str] = None # User ID (UUID as string) for JWT
 
 class ForgotPasswordRequest(BaseSchema):
     email: EmailStr = Field(..., description="Email address to send password reset link")

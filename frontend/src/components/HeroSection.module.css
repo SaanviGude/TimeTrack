@@ -39,10 +39,11 @@
   margin-left: auto;
   margin-right: auto;
   
-  /* 3. Adds some space between the text above and the image */
-  margin-top: 2rem; /* A rem is about 16px, so this is 32px of space */
+  /* 3. Reduced space between the text above and the image */
+  margin-top: 0.5rem; /* Reduced from 2rem to bring image closer to text */
   
-  /* --- 4. This is the part that nudges the image UP --- */
+  /* --- 4. Position image closer to text and eliminate gap below --- */
   position: relative;
-  top: -200px; /* A negative value moves it up. Change this number as you like. */
+  top: -120px; /* Move image up more aggressively closer to text */
+  margin-bottom: -200px; /* Eliminate all space below image and pull next section up */
 }

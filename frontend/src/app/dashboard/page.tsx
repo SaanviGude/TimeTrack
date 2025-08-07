@@ -8,6 +8,7 @@ import { ProjectCard } from '../../components/ProjectCard';
 import { NewProjectModal } from '../../components/NewProjectModal';
 import { Project, CreateProjectData, UpdateProjectData } from '../../types/project';
 import { projectService } from '../../services/projectService';
+import '../../styles/dashboard.css';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -76,56 +77,59 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
-      <div className="flex h-screen bg-gray-50">
+      <div className="dashboard-container">
         {/* Sidebar */}
         <Sidebar activeItem="Projects" />
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto">
+        <div className="main-content">
           {/* Header */}
-          <header className="bg-white shadow-sm border-b border-gray-200 px-8 py-6">
-            <div className="flex justify-between items-center">
+          <header className="content-header">
+            <div className="header-content">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">My Projects</h1>
-                <p className="text-gray-600 mt-1">Manage and track your project progress</p>
+                <h1 className="header-title">My Projects</h1>
+                <p className="header-subtitle">Manage and track your project progress</p>
               </div>
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
+                className="new-project-btn"
               >
-                <span className="text-lg">➕</span>
-                <span className="font-medium">New Project</span>
+                <span className="btn-icon">➕</span>
+                <span>New Project</span>
               </button>
             </div>
           </header>
 
           {/* Content */}
-          <main className="px-8 py-6">
+          <main className="content-main">
             {isLoading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="text-lg text-gray-600">Loading projects...</div>
+              <div className="loading-container">
+                <div className="loading-text">
+                  <div className="loading-spinner"></div>
+                  Loading projects...
+                </div>
               </div>
             ) : projects.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="text-6xl mb-4">📋</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">No projects yet</h3>
-                <p className="text-gray-600 mb-6">Get started by creating your first project</p>
+              <div className="empty-state">
+                <div className="empty-icon">📋</div>
+                <h3 className="empty-title">No projects yet</h3>
+                <p className="empty-subtitle">Get started by creating your first project</p>
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="inline-flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="create-first-btn"
                 >
                   <span>➕</span>
                   <span>Create First Project</span>
                 </button>
               </div>
             ) : (
-              <div>
-                <div className="mb-6">
-                  <h2 className="text-lg font-semibold text-gray-900">
+              <div className="projects-section">
+                <div className="section-header">
+                  <h2 className="section-title">
                     All Projects ({projects.length})
                   </h2>
                 </div>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="projects-grid">
                   {projects.map(project => (
                     <ProjectCard
                       key={project.id}

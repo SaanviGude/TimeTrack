@@ -59,81 +59,69 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onEdit, onDel
 
   if (isEditing) {
     return (
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
-            <input
-              type="text"
-              value={editData.name}
-              onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Progress (%)</label>
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={editData.progress}
-              onChange={(e) => setEditData({ ...editData, progress: Number(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
+      <div className="project-card editing">
+        <div className="edit-form">
+          <input
+            type="text"
+            value={editData.name}
+            onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+            className="edit-input"
+            placeholder="Project name"
+          />
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="edit-row">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
               <input
                 type="date"
                 value={getDateInputValue(editData.startDate)}
                 onChange={(e) => setEditData({ ...editData, startDate: new Date(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="edit-input"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
               <input
                 type="date"
                 value={getDateInputValue(editData.endDate)}
                 onChange={(e) => setEditData({ ...editData, endDate: new Date(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="edit-input"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea
-              value={editData.description}
-              onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
+          <textarea
+            value={editData.description}
+            onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+            className="edit-textarea"
+            placeholder="Description"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Requirements</label>
-            <textarea
-              value={editData.requirements}
-              onChange={(e) => setEditData({ ...editData, requirements: e.target.value })}
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
+          <textarea
+            value={editData.requirements}
+            onChange={(e) => setEditData({ ...editData, requirements: e.target.value })}
+            className="edit-textarea"
+            placeholder="Requirements"
+          />
 
-          <div className="flex space-x-3 pt-2">
+          <input
+            type="number"
+            min="0"
+            max="100"
+            value={editData.progress}
+            onChange={(e) => setEditData({ ...editData, progress: Number(e.target.value) })}
+            className="edit-input"
+            placeholder="Progress (%)"
+          />
+
+          <div className="edit-actions">
             <button
               onClick={handleSave}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="save-btn"
             >
               Save
             </button>
             <button
               onClick={handleCancel}
-              className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+              className="cancel-btn"
             >
               Cancel
             </button>
@@ -142,6 +130,73 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onEdit, onDel
       </div>
     );
   }
+
+  return (
+    <div className="project-card">
+      <div className="project-header">
+        <div>
+          <h3 className="project-title">
+            {project.name}
+          </h3>
+          {project.description && (
+            <p className="project-description">{project.description}</p>
+          )}
+        </div>
+        <div className="project-actions">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditing(true);
+            }}
+            className="action-btn edit"
+            title="Edit project"
+          >
+            ✏️
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (window.confirm('Are you sure you want to delete this project?')) {
+                onDelete(project.id);
+              }
+            }}
+            className="action-btn delete"
+            title="Delete project"
+          >
+            🗑️
+          </button>
+        </div>
+      </div>
+
+      <div className="project-dates">
+        <div className="date-item">
+          <span className="date-label">Start Date</span>
+          <span className="date-value">{formatDate(project.startDate)}</span>
+        </div>
+        <div className="date-item">
+          <span className="date-label">End Date</span>
+          <span className={`date-value ${isOverdue() ? 'date-overdue' : ''}`}>
+            {formatDate(project.endDate)}
+            {isOverdue() && ' (Overdue)'}
+          </span>
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="progress-container">
+        <div className="progress-header">
+          <span className="progress-label">Progress</span>
+          <span className="progress-value">{project.progress}%</span>
+        </div>
+        <div className="progress-bar">
+          <div
+            className="progress-fill"
+            style={{ width: `${project.progress}%` }}
+          ></div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg border border-blue-200 p-6 hover:shadow-xl transition-all duration-300 cursor-pointer group">

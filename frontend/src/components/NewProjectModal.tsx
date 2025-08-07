@@ -98,7 +98,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
         <h2>Create New Project</h2>
         
         {error && (
-          <div style={{ color: '#dc2626', backgroundColor: '#fef2f2', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
+          <div className="error-message">
             {error}
           </div>
         )}
@@ -130,7 +130,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
           </div>
 
           <div className="date-row">
-            <div style={{ flex: 1 }}>
+            <div>
               <label htmlFor="startDate">Start Date *</label>
               <input
                 id="startDate"
@@ -142,7 +142,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
               />
             </div>
             
-            <div style={{ flex: 1 }}>
+            <div>
               <label htmlFor="endDate">End Date *</label>
               <input
                 id="endDate"

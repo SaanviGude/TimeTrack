@@ -1,60 +1,60 @@
 .navbar {
-display: flex;
-width: 100%;       /* It will now shrink to fit the doorway */
-max-width: 1280px; /* But it won't get any bigger than 1280px */
-margin: 0 auto;    /* This centers it if the doorway is extra wide */
-height: 112px;
-padding:  25px 20px;
-justify-content: space-between;
-align-items: center;
-flex-shrink: 0;
-border-radius: 5px;
-background: linear-gradient(180deg, #bbdcfe 29.81%, #FFF 100%);
+  display: flex;
+  width: 100%;
+  margin: 0;
+  height: 80px;
+  padding: 0 40px;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(180deg, #bbdcfe 0%, #ffffff 100%);
+  color: var(--primary-blue);
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
+  border-radius: 0;
+  z-index: 100;
 }
 
 .logo {
-  font-size: 1.8rem;
-  font-weight: 700;
+  font-size: 2rem;
+  font-weight: 800;
   color: var(--primary-blue);
+  letter-spacing: 1px;
   position: relative;
-  top: -2px;
+  top: 0;
 }
 
 /* This is the container for the buttons */
 .buttons {
   display: flex;
-  align-items: center; /* Vertically aligns the buttons */
-  gap: 1rem;       /* Creates space between buttons (e.g., 16px) */
+  align-items: center;
+  gap: 1rem;
   position: relative;
-  top: -4px;
+  top: 0;
 }
 
 /* Base styles for BOTH buttons can go here if you want */
 .logInButton,
 .signUpButton {
-  /* Sizing is now controlled ONLY by padding and font-size */
-  padding: 8px 20px; 
-  
-  /* Your desired styles */
-  border-radius: 15px;
-  box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25); 
-  font-family: 'Manrope', sans-serif; /* Added a fallback font */
+  padding: 8px 24px;
+  border-radius: 20px;
+  font-family: 'Manrope', sans-serif;
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   text-align: center;
+  transition: background 0.2s, color 0.2s;
+  box-shadow: none;
 }
 
 /* Specific styles for the Log In button */
 .logInButton {
-  background: #FFF;
-  color: #0957AB;
-  border: 1px solid #0957AB;
+  background: #fff;
+  color: var(--primary-blue);
+  border: 2px solid var(--primary-blue);
 }
 
 /* Specific styles for the Sign Up button */
 .signUpButton {
-  background: #011D3C;
-  color: #FFF;
-  border: 1px solid #FFF; /* Sign up button in the image doesn't have a border */
+  background: var(--primary-blue);
+  color: #fff;
+  border: 2px solid var(--primary-blue);
 }

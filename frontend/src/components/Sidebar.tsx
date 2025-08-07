@@ -24,8 +24,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeItem = 'Projects' }) => 
       // Already on dashboard, do nothing
       return;
     }
-    // For now, just show alert for unimplemented routes
-    alert(`${path} feature coming soon!`);
+    if (path === '/ace') {
+      router.push('/ace');
+      return;
+    }
+    // Add more navigation logic as needed
+    console.log(`Navigating to ${path}`);
+  };
+
+  const handleProfileClick = () => {
+    router.push('/profile');
   };
 
   const handleLogout = () => {
@@ -34,39 +42,35 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeItem = 'Projects' }) => 
   };
 
   return (
-    <div className="w-64 bg-blue-100 shadow-lg h-screen flex flex-col">
+    <div className="sidebar">
       {/* Header */}
-      <div className="p-6 border-b border-blue-200">
-        <div className="flex items-center space-x-3 mb-4">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">T</span>
+      <div className="sidebar-header">
+        <div className="sidebar-brand">
+          <div className="sidebar-logo">
+            <span>T</span>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-800">TimeTrack</h1>
-            <p className="text-sm text-gray-600">Workspace</p>
+            <h1 className="sidebar-title">TimeTrack</h1>
+            <p className="sidebar-subtitle">Workspace</p>
           </div>
         </div>
-        <div className="bg-blue-50 rounded-lg p-3">
-          <p className="text-sm font-medium text-gray-700">{user?.name || 'User'}</p>
-          <p className="text-xs text-gray-600">{user?.email}</p>
+        <div className="sidebar-user-info">
+          <p className="sidebar-user-name">{user?.name || 'User'}</p>
+          <p className="sidebar-user-email">{user?.email}</p>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4">
-        <ul className="space-y-1 px-3">
+      <nav className="sidebar-nav">
+        <ul className="nav-list">
           {navigationItems.map((item) => (
-            <li key={item.name}>
+            <li key={item.name} className="nav-item">
               <button
                 onClick={() => handleNavigation(item.path)}
-                className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                  activeItem === item.name
-                    ? 'bg-blue-200 text-blue-800 border-r-2 border-blue-700'
-                    : 'text-gray-700 hover:bg-blue-50 hover:text-gray-900'
-                }`}
+                className={`nav-button ${activeItem === item.name ? 'active' : ''}`}
               >
-                <span className="text-lg">{item.icon}</span>
-                <span className="font-medium">{item.name}</span>
+                <span className="nav-icon">{item.icon}</span>
+                <span>{item.name}</span>
               </button>
             </li>
           ))}
@@ -74,21 +78,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeItem = 'Projects' }) => 
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-blue-200 space-y-2">
-        <button className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-gray-900 transition-colors">
-          <span className="text-lg">👤</span>
-          <span className="font-medium">Profile</span>
+      <div className="sidebar-footer">
+        <button 
+          onClick={handleProfileClick}
+          className="footer-button"
+        >
+          <span className="nav-icon">👤</span>
+          <span>Profile</span>
         </button>
-        <button className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-gray-900 transition-colors">
-          <span className="text-lg">🔔</span>
-          <span className="font-medium">Notifications</span>
+        <button className="footer-button">
+          <span className="nav-icon">🔔</span>
+          <span>Notifications</span>
         </button>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+          className="footer-button logout"
         >
-          <span className="text-lg">🚪</span>
-          <span className="font-medium">Logout</span>
+          <span className="nav-icon">🚪</span>
+          <span>Logout</span>
         </button>
       </div>
     </div>

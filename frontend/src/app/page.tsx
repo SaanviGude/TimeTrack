@@ -3,15 +3,15 @@ import HeroSection from '../components/HeroSection';
 import FeaturesSection from '../components/FeaturesSection';
 import Footer from '../components/Footer';
 
-// Inside src/app/page.tsx
 export default function LandingPage() {
   return (
-    <main> 
+    <main className="min-h-screen bg-white"> 
       <Navbar />
       <HeroSection />
       <FeaturesSection /> 
       <Footer />
-      {/* ... other sections ... */}
+      {/* Test Tailwind */}
+
     </main>
   );
 }

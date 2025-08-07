@@ -1,17 +1,15 @@
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+/* TimeTrack Global Styles */
 
 /* Define colors from the design to reuse them easily */
 :root {
   --background-color: #ffffff;
   --text-color: #333;
-  --primary-blue: #0A74DA; /* Main blue for buttons and accents */
-  --dark-blue-bg: #002D62; /* Darker blue for footer and features section */
-  --light-gray-text: #555;
-  --font-main: 'Inter', sans-serif; /* Example font, use whichever you prefer */
+  --primary-blue: #1e3a8a; /* Navy blue for buttons and accents */
+  --secondary-blue: #1e40af; /* Darker navy blue for gradients */
+  --light-blue: #e6f3ff; /* Light blue for backgrounds */
+  --dark-blue-bg: #0f172a; /* Very dark navy for footer and features section */
+  --light-gray-text: #64748b;
+  --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
 }
 
 /* Basic Reset */
@@ -21,11 +19,22 @@ body {
   margin: 0;
 }
 
+html {
+  height: 100%;
+}
+
 body {
   background-color: var(--background-color);
   color: var(--text-color);
   font-family: var(--font-main);
   line-height: 1.6;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#__next {
+  height: 100%;
 }
 
 a {
@@ -33,9 +42,65 @@ a {
   text-decoration: none;
 }
 
-/* --- ADD THIS BLOCK TO THE END OF THE FILE TO FIX THE HEIGHT --- */
-html,
-body {
-  height: auto !important;
-  min-height: auto !important;
+button {
+  font-family: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
+
+/* Utility classes for common patterns */
+.text-center {
+  text-align: center;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.space-x-2 > * + * {
+  margin-left: 8px;
+}
+
+.space-y-2 > * + * {
+  margin-top: 8px;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.h-full {
+  height: 100%;
+}
+
+/* Focus styles for accessibility */
+button:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid var(--primary-blue);
+  outline-offset: 2px;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
 }

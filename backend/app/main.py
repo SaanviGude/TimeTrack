@@ -7,10 +7,11 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="TimeTrack API", description="A time tracking application API")
 
-# Configure CORS
+# Configure CORS to allow requests from your frontend
 origins = [
     "http://localhost",
-    "http://localhost:3000",  # Allow your Next.js frontend
+    "http://localhost:3000",
+    "http://127.0.0.1",
     "http://127.0.0.1:3000",
 ]
 
